@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en"><head><title>Create Profile | EGS Chronos</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="icon" href="assets/logo.png"><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div id="nav"></div>
+<main class="auth-wrap">
+  <div class="auth-card">
+    <div class="eyebrow">Student Registration</div>
+    <h1>Create your profile.</h1>
+    <p class="muted">Use your college email (ending with @egs.edu).</p>
+    <div class="field"><label>Full name</label><input id="fullName" placeholder="Your name"></div>
+    <div class="field"><label>College email</label><input id="email" type="email" placeholder="yourname@egs.edu"></div>
+    <div class="field"><label>Password (min 6 characters)</label><input id="password" type="password"></div>
+    <div class="row2">
+      <div class="field"><label>Department</label><select id="dept"></select></div>
+      <div class="field"><label>Year</label><select id="year"></select></div>
+    </div>
+    <div class="field"><label>Skills (comma separated)</label><input id="skills" placeholder="Python, Public Speaking, CAD"></div>
+    <button class="btn btn-dark btn-block" id="regBtn">Create Profile &rarr;</button>
+    <div class="error" id="err"></div>
+    <div class="auth-foot">Already registered? <a href="login.html">Login</a></div>
+  </div>
+</main>
+<script src="js/data.js"></script><script src="js/app.js"></script>
+<script>
+  renderNav("login");
+  fillSelect(dept, DEPARTMENTS); fillSelect(year, YEARS);
+  regBtn.onclick = () => {
+    const n = fullName.value.trim(), e = email.value.trim().toLowerCase();
+    if (!n) return err.textContent = "Please enter your name.";
+    if (!/^[^@\s]+@egs\.edu$/.test(e)) return err.textContent = "Please use your college email ending with @egs.edu";
+    if (password.value.length < 6) return err.textContent = "Password must be at least 6 characters.";
+    const r = addUser({ name: n, email: e, password: password.value, role: "student", dept: dept.value, year: year.value,
+      about: "", skills: skills.value.split(",").map(s => s.trim()).filter(Boolean) });
+    if (!r.ok) return err.textContent = r.msg;
+    login(e, password.value, "student");
+    location.href = "dashboard.html";
+  };
+</script>
+</body></html>

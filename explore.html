@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en"><head><title>Explore Talent | EGS Chronos</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="icon" href="assets/logo.png"><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div id="nav"></div>
+<main><div class="container">
+  <div class="page-head">
+    <div class="eyebrow">Talent Discovery</div>
+    <h1>Explore college talent.</h1>
+    <p>Find students by what they know and what they have achieved.</p>
+  </div>
+  <div class="filters">
+    <input type="search" id="q" placeholder="Search by student, skill or achievement...">
+    <select id="fDept"></select>
+    <select id="fCat"></select>
+    <select id="fLevel"></select>
+    <select id="fYear"></select>
+  </div>
+  <label class="check"><input type="checkbox" id="fVerified"> Show only students with verified achievements</label>
+  <div class="count" id="count"></div>
+  <div class="grid" id="results"></div>
+</div></main>
+<div id="footer"></div>
+<script src="js/data.js"></script><script src="js/app.js"></script>
+<script>
+  renderNav("explore"); renderFooter();
+  fillSelect(fDept, DEPARTMENTS, "All departments");
+  fillSelect(fCat, CATEGORIES, "All categories");
+  fillSelect(fLevel, LEVELS, "All levels");
+  fillSelect(fYear, YEARS, "All years");
+
+  function render() {
+    const q = document.getElementById("q").value.trim().toLowerCase();
+    const dept = fDept.value, cat = fCat.value, lvl = fLevel.value, yr = fYear.value, onlyV = fVerified.checked;
+    const all = getAchievements();
+    const list = getStudents().filter(s => {
+      let ach = all.filter(a => a.userId === s.id);
+      if (onlyV) ach = ach.filter(a => a.status === "verified");
+      if (dept && s.dept !== dept) return false;
+      if (yr && s.year !== yr) return false;
+      if (cat && !ach.some(a => a.category === cat)) return false;
+      if (lvl && !ach.some(a => a.level === lvl)) return false;
+      if (onlyV && ach.length === 0) return false;
+      if (q) {
+        const hay = [s.name, s.dept, s.about, ...s.skills, ...ach.map(a => a.title + " " + (a.tags || []).join(" ") + " " + a.category)].join(" ").toLowerCase();
+        if (!hay.includes(q)) return false;
+      }
+      return true;
+    });
+    document.getElementById("count").textContent = list.length + " student" + (list.length === 1 ? "" : "s") + " found";
+    document.getElementById("results").innerHTML = list.length ? list.map(s => {
+      const ach = all.filter(a => a.userId === s.id);
+      const ver = ach.filter(a => a.status === "verified").length;
+      return `<div class="card person">
+        <div class="person-top"><div class="avatar">${esc(initials(s.name))}</div>
+          <div><h3>${esc(s.name)}</h3><div class="muted">${esc(s.dept)} &middot; ${esc(s.year)}</div></div></div>
+        <div class="chips">${s.skills.slice(0, 4).map(k => '<span class="chip">' + esc(k) + '</span>').join("")}</div>
+        <div class="muted">${ach.length} achievement${ach.length === 1 ? "" : "s"} &middot; ${ver} verified</div>
+        <a class="btn btn-block" href="profile.html?id=${s.id}">View Profile &rarr;</a>
+      </div>`;
+    }).join("") : '<div class="empty" style="grid-column:1/-1">No students match your search. Try removing a filter.</div>';
+  }
+  ["q","fDept","fCat","fLevel","fYear","fVerified"].forEach(id => document.getElementById(id).addEventListener("input", render));
+  render();
+</script>
+</body></html>

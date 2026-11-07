@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en"><head><title>Review Panel | EGS Chronos</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="icon" href="assets/logo.png"><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div id="nav"></div>
+<main><div class="container">
+  <div class="page-head"><div class="eyebrow" id="roleTag"></div><h1>Verification &amp; control.</h1>
+    <p>Check achievements against their source links and approve or reject them.</p></div>
+  <div class="stats" style="margin-bottom:10px">
+    <div class="stat"><strong id="cStu">0</strong><span>Students</span></div>
+    <div class="stat"><strong id="cPen">0</strong><span>Pending review</span></div>
+    <div class="stat"><strong id="cVer">0</strong><span>Verified</span></div>
+    <div class="stat"><strong id="cRej">0</strong><span>Rejected</span></div>
+  </div>
+  <div class="tabs">
+    <button class="tab active" data-f="pending">Pending</button>
+    <button class="tab" data-f="verified">Verified</button>
+    <button class="tab" data-f="rejected">Rejected</button>
+    <button class="tab" data-f="all">All</button>
+    <button class="tab" data-f="users" id="usersTab" style="display:none">Manage Students</button>
+  </div>
+  <div class="card table-wrap" style="margin-bottom:60px"><div id="panel"></div></div>
+  <div id="resetBox" style="display:none;margin-bottom:50px">
+    <button class="btn btn-danger btn-sm" id="resetBtn">Reset demo data</button>
+    <span class="muted"> Restores the original sample students and achievements.</span>
+  </div>
+</div></main>
+<div id="footer"></div>
+<script src="js/data.js"></script><script src="js/app.js"></script>
+<script>
+  const me = requireRole(["faculty", "admin"]);
+  renderNav("admin"); renderFooter();
+  roleTag.textContent = me.role === "admin" ? "Admin Control" : "Faculty Review";
+  if (me.role === "admin") { usersTab.style.display = ""; resetBox.style.display = ""; }
+  let filter = "pending";
+
+  function stats() {
+    const a = getAchievements();
+    cStu.textContent = getStudents().length;
+    cPen.textContent = a.filter(x => x.status === "pending").length;
+    cVer.textContent = a.filter(x => x.status === "verified").length;
+    cRej.textContent = a.filter(x => x.status === "rejected").length;
+  }
+  function render() {
+    stats();
+    if (filter === "users") return renderUsers();
+    const list = getAchievements().filter(a => filter === "all" || a.status === filter);
+    if (!list.length) { panel.innerHTML = '<div class="empty" style="border:0">Nothing here.</div>'; return; }
+    panel.innerHTML = '<table><thead><tr><th>Student</th><th>Achievement</th><th>Source</th><th>Status</th><th>Action</th></tr></thead><tbody>' +
+      list.map(a => {
+        const s = getUser(a.userId) || { name: "(deleted)" };
+        return '<tr><td><b>' + esc(s.name) + '</b><div class="muted">' + esc(s.dept || "") + '</div></td>' +
+          '<td><b>' + esc(a.title) + '</b><div class="muted">' + esc(a.category) + ' &middot; ' + esc(a.level) + ' &middot; ' + esc(a.date) + '</div></td>' +
+          '<td>' + (a.sourceUrl ? '<a class="src" style="color:var(--blue);font-weight:700" target="_blank" rel="noopener" href="' + esc(a.sourceUrl) + '">Open link</a>' : '<span class="muted">No link</span>') + '</td>' +
+          '<td><span class="badge ' + a.status + '">' + statusLabel(a.status) + '</span></td>' +
+          '<td><div class="ach-actions">' +
+            (a.status !== "verified" ? '<button class="btn btn-sm btn-blue" onclick="setStatus(\'' + a.id + '\',\'verified\')">Verify</button>' : '') +
+            (a.status !== "rejected" ? '<button class="btn btn-sm btn-danger" onclick="setStatus(\'' + a.id + '\',\'rejected\')">Reject</button>' : '') +
+          '</div></td></tr>';
+      }).join("") + '</tbody></table>';
+  }
+  function renderUsers() {
+    const list = getStudents();
+    panel.innerHTML = '<table><thead><tr><th>Name</th><th>Email</th><th>Department</th><th>Year</th><th>Action</th></tr></thead><tbody>' +
+      list.map(s => '<tr><td><b>' + esc(s.name) + '</b></td><td>' + esc(s.email) + '</td><td>' + esc(s.dept) + '</td><td>' + esc(s.year) + '</td>' +
+        '<td><div class="ach-actions"><a class="btn btn-sm" href="profile.html?id=' + s.id + '">View</a>' +
+        '<button class="btn btn-sm btn-danger" onclick="removeStudent(\'' + s.id + '\')">Remove</button></div></td></tr>').join("") + '</tbody></table>';
+  }
+  function setStatus(id, status) { updateAchievement(id, { status }); toast("Marked as " + status); render(); }
+  function removeStudent(id) { if (confirm("Remove this student and all their achievements?")) { deleteUser(id); toast("Student removed"); render(); } }
+  document.querySelectorAll(".tab").forEach(t => t.onclick = () => {
+    document.querySelectorAll(".tab").forEach(x => x.classList.remove("active"));
+    t.classList.add("active"); filter = t.dataset.f; render();
+  });
+  resetBtn.onclick = () => { if (confirm("Reset ALL data to the demo defaults?")) { resetDB(); location.href = "login.html"; } };
+  render();
+</script>
+</body></html>

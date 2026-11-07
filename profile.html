@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en"><head><title>Student Profile | EGS Chronos</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="icon" href="assets/logo.png"><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div id="nav"></div>
+<main><div class="container" id="content" style="padding-top:30px"></div></main>
+<div id="footer"></div>
+<script src="js/data.js"></script><script src="js/app.js"></script>
+<script>
+  renderNav("explore"); renderFooter();
+  const id = new URLSearchParams(location.search).get("id");
+  const s = getUser(id);
+  const box = document.getElementById("content");
+  if (!s || s.role !== "student") {
+    box.innerHTML = '<div class="empty">Student not found. <a href="explore.html" style="color:var(--blue);font-weight:700">Back to Explore</a></div>';
+  } else {
+    const ach = getAchievementsOf(s.id);
+    box.innerHTML = `
+      <a href="explore.html" class="muted">&larr; Back to Explore</a>
+      <div class="card" style="margin:14px 0 22px">
+        <div class="profile-head"><div class="avatar lg">${esc(initials(s.name))}</div>
+          <div><div class="side-title" style="margin:0">Student Profile</div><h1>${esc(s.name)}</h1>
+          <div class="muted">${esc(s.dept)} &middot; ${esc(s.year)} &middot; ${esc(s.email)}</div></div></div>
+      </div>
+      <div class="card" style="margin-bottom:26px">
+        <div class="side-title">About</div><p>${esc(s.about || "No description added yet.")}</p>
+        <div class="side-title" style="margin-top:16px">Skills</div>
+        <div class="chips">${s.skills.length ? s.skills.map(k => '<span class="chip">' + esc(k) + '</span>').join("") : '<span class="muted">No skills added yet.</span>'}</div>
+      </div>
+      <div class="side-title">Achievements</div>
+      <h2 class="section-title">${ach.length} milestone${ach.length === 1 ? "" : "s"}.</h2>
+      <div style="margin-bottom:60px">${ach.length ? ach.map(a => achievementHTML(a)).join("") : '<div class="empty">No achievements added yet.</div>'}</div>`;
+    document.title = s.name + " | EGS Chronos";
+  }
+</script>
+</body></html>

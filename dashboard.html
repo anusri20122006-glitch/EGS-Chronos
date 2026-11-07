@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en"><head><title>My Dashboard | EGS Chronos</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="icon" href="assets/logo.png"><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div id="nav"></div>
+<main><div class="container">
+  <div class="page-head"><div class="eyebrow">Student Dashboard</div><h1 id="hello">Welcome</h1>
+    <p>Manage your profile and showcase your achievements.</p></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="side-title">My Profile</div>
+      <div class="field"><label>Full name</label><input id="pName"></div>
+      <div class="row2">
+        <div class="field"><label>Department</label><select id="pDept"></select></div>
+        <div class="field"><label>Year</label><select id="pYear"></select></div>
+      </div>
+      <div class="field"><label>About me</label><textarea id="pAbout" rows="3"></textarea></div>
+      <div class="field"><label>Skills (comma separated)</label><input id="pSkills"></div>
+      <button class="btn btn-dark btn-block" id="saveProfile">Save Profile</button>
+      <a class="btn btn-block" style="margin-top:10px" id="viewPublic">View public profile</a>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+        <div><div class="side-title" style="margin:0">My Achievements</div><h2 id="achCount" style="font-size:1.5rem"></h2></div>
+        <button class="btn btn-blue" id="addBtn">+ Add Achievement</button>
+      </div>
+      <div id="achList"></div>
+    </div>
+  </div>
+</div></main>
+
+<div class="modal-bg" id="modalBg"><div class="modal">
+  <h2 id="mTitle">Add Achievement</h2>
+  <p class="muted">New achievements stay "Pending" until faculty verify them.</p>
+  <div class="field"><label>Title</label><input id="aTitle" placeholder="e.g. Smart India Hackathon Finalist"></div>
+  <div class="row2">
+    <div class="field"><label>Category</label><select id="aCat"></select></div>
+    <div class="field"><label>Level</label><select id="aLevel"></select></div>
+  </div>
+  <div class="field"><label>Date</label><input id="aDate" type="date"></div>
+  <div class="field"><label>Description</label><textarea id="aDesc" rows="3"></textarea></div>
+  <div class="field"><label>Tags (comma separated)</label><input id="aTags" placeholder="Python, Team"></div>
+  <div class="field"><label>Original source link (optional but recommended)</label><input id="aUrl" type="url" placeholder="https://..."></div>
+  <div class="error" id="aErr"></div>
+  <div style="display:flex;gap:10px;margin-top:10px"><button class="btn btn-dark" id="aSave">Save</button><button class="btn" id="aCancel">Cancel</button></div>
+</div></div>
+<div id="footer"></div>
+<script src="js/data.js"></script><script src="js/app.js"></script>
+<script>
+  const me = requireRole(["student"]);
+  renderNav("dashboard"); renderFooter();
+  fillSelect(pDept, DEPARTMENTS); fillSelect(pYear, YEARS);
+  fillSelect(aCat, CATEGORIES); fillSelect(aLevel, LEVELS);
+  let editingId = null;
+
+  function loadProfile() {
+    const u = getUser(me.id);
+    hello.textContent = "Welcome, " + u.name.split(" ")[0] + ".";
+    pName.value = u.name; pDept.value = u.dept; pYear.value = u.year;
+    pAbout.value = u.about || ""; pSkills.value = u.skills.join(", ");
+    viewPublic.href = "profile.html?id=" + u.id;
+  }
+  saveProfile.onclick = () => {
+    if (!pName.value.trim()) return toast("Name cannot be empty");
+    updateUser(me.id, { name: pName.value.trim(), dept: pDept.value, year: pYear.value, about: pAbout.value.trim(),
+      skills: pSkills.value.split(",").map(s => s.trim()).filter(Boolean) });
+    toast("Profile saved"); loadProfile(); renderNav("dashboard");
+  };
+
+  function renderAch() {
+    const list = getAchievementsOf(me.id);
+    achCount.textContent = list.length + " milestone" + (list.length === 1 ? "" : "s");
+    achList.innerHTML = list.length ? list.map(a => achievementHTML(a,
+      '<div class="ach-actions"><button class="btn btn-sm" onclick="openModal(\'' + a.id + '\')">Edit</button>' +
+      '<button class="btn btn-sm btn-danger" onclick="removeAch(\'' + a.id + '\')">Delete</button></div>'
+    )).join("") : '<div class="empty">You have not added any achievements yet. Click "+ Add Achievement".</div>';
+  }
+  function openModal(id) {
+    editingId = id || null;
+    aErr.textContent = "";
+    const a = id ? getAchievements().find(x => x.id === id) : null;
+    mTitle.textContent = a ? "Edit Achievement" : "Add Achievement";
+    aTitle.value = a ? a.title : ""; aCat.value = a ? a.category : CATEGORIES[0]; aLevel.value = a ? a.level : LEVELS[0];
+    aDate.value = a ? a.date : new Date().toISOString().slice(0, 10);
+    aDesc.value = a ? a.description : ""; aTags.value = a ? (a.tags || []).join(", ") : ""; aUrl.value = a ? a.sourceUrl : "";
+    modalBg.classList.add("open");
+  }
+  function closeModal() { modalBg.classList.remove("open"); }
+  function removeAch(id) { if (confirm("Delete this achievement?")) { deleteAchievement(id); renderAch(); toast("Deleted"); } }
+  addBtn.onclick = () => openModal();
+  aCancel.onclick = closeModal;
+  aSave.onclick = () => {
+    if (!aTitle.value.trim()) return aErr.textContent = "Please enter a title.";
+    if (aUrl.value.trim() && !/^https?:\/\//i.test(aUrl.value.trim())) return aErr.textContent = "Source link must start with http:// or https://";
+    const data = { title: aTitle.value.trim(), category: aCat.value, level: aLevel.value, date: aDate.value,
+      description: aDesc.value.trim(), tags: aTags.value.split(",").map(s => s.trim()).filter(Boolean), sourceUrl: aUrl.value.trim() };
+    if (editingId) { updateAchievement(editingId, Object.assign(data, { status: "pending" })); toast("Updated - sent for re-verification"); }
+    else { addAchievement(Object.assign(data, { userId: me.id })); toast("Achievement added"); }
+    closeModal(); renderAch();
+  };
+  loadProfile(); renderAch();
+</script>
+</body></html>

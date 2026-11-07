@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en"><head><title>EGS Chronos | College Talent Discovery</title><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"><link rel="icon" href="assets/logo.png"><link rel="stylesheet" href="css/style.css"></head>
+<body>
+<div id="nav"></div>
+<main>
+  <section class="hero"><div class="container">
+    <div>
+      <div class="eyebrow">College Talent Discovery</div>
+      <h1>Every achievement.<br><span>One campus.</span></h1>
+      <p class="lead">Discover the skills, achievements and talent within your college community &mdash; all in one simple place.</p>
+      <div class="actions">
+        <a class="btn btn-dark" href="explore.html">Explore Talent &rarr;</a>
+        <a class="btn" href="register.html">Create Profile</a>
+      </div>
+    </div>
+    <div class="hero-card">
+      <div class="logo-circle"><img src="assets/logo.png" alt="EGS logo"></div>
+      <small>EGS CHRONOS</small>
+      <h3>Turn achievements into opportunities.</h3>
+      <p>Search by skill, department or achievement and find the right student faster.</p>
+    </div>
+  </div></section>
+
+  <div class="container">
+    <div class="stats">
+      <div class="stat"><strong id="sStudents">0</strong><span>Students</span></div>
+      <div class="stat"><strong id="sAch">0</strong><span>Achievements</span></div>
+      <div class="stat"><strong id="sVer">0</strong><span>Verified</span></div>
+      <div class="stat"><strong id="sSkills">0</strong><span>Skills listed</span></div>
+    </div>
+
+    <div class="eyebrow">Why Chronos</div>
+    <h2 class="section-title">Built for the EGS community</h2>
+    <div class="features">
+      <div class="feature"><div class="ico">&#128269;</div><h4>Talent Search</h4><p>Find students by skill, department, category, level or year in seconds.</p></div>
+      <div class="feature"><div class="ico">&#127942;</div><h4>Achievement Showcase</h4><p>Add awards, certificates, hackathons, internships, projects and research.</p></div>
+      <div class="feature"><div class="ico">&#9989;</div><h4>Easy Verification</h4><p>Attach the original source link and let faculty verify each achievement.</p></div>
+    </div>
+
+    <div class="eyebrow">How it works</div>
+    <h2 class="section-title">Five simple steps</h2>
+    <div class="steps">
+      <div class="step"><b>College Login</b><span>Students and faculty sign in with college identity.</span></div>
+      <div class="step"><b>Create Profile</b><span>Add details, department and skills.</span></div>
+      <div class="step"><b>Add Achievements</b><span>Post awards, projects, internships and more.</span></div>
+      <div class="step"><b>Add Source</b><span>Attach an original-source link as proof.</span></div>
+      <div class="step"><b>Search &amp; Verify</b><span>Discover students and check their achievements.</span></div>
+    </div>
+  </div>
+</main>
+<div id="footer"></div>
+<script src="js/data.js"></script><script src="js/app.js"></script>
+<script>
+  renderNav("home"); renderFooter();
+  const st = getStudents(), ac = getAchievements();
+  document.getElementById("sStudents").textContent = st.length;
+  document.getElementById("sAch").textContent = ac.length;
+  document.getElementById("sVer").textContent = ac.filter(a => a.status === "verified").length;
+  document.getElementById("sSkills").textContent = new Set(st.flatMap(s => s.skills.map(x => x.toLowerCase()))).size;
+</script>
+</body></html>
